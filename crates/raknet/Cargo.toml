@@ -5,10 +5,11 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-tokio.workspace = true
+tokio = { workspace = true, features = ["net", "sync", "time"] }
 tracing.workspace = true
 thiserror.workspace = true
 bytes.workspace = true
+rand = "0.8"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["net", "macros", "rt-multi-thread"] }

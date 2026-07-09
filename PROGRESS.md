@@ -7,14 +7,15 @@
 - [x] GitHub Actions CI (fmt, clippy, test)
 - [x] Architecture docs, protocol notes, AGENTS.md
 
-## Phase 1 — Transport (RakNet)
+## Phase 1 — Transport (RakNet) ✅
 
-- [ ] UDP socket + unconnected ping/pong (server discovery)
-- [ ] Connection handshake (open connection request/reply)
-- [ ] Reliability layers (unreliable, reliable, reliable-ordered)
-- [ ] Packet splitting/reassembly (MTU)
-- [ ] ACK/NACK handling
-- [ ] Connection lifecycle (timeouts, disconnects, ping tracking)
+- [x] UDP socket + unconnected ping/pong (server discovery)
+- [x] Connection handshake (open connection request/reply)
+- [x] Reliability layers (unreliable, reliable, reliable-ordered)
+- [ ] Packet splitting/reassembly (MTU) — ponytail: split field parsed but reassembly deferred
+- [x] ACK/NACK handling
+- [x] Connection lifecycle (timeouts, disconnects, ping tracking)
+- [x] 17 round-trip tests (offline packets, frames, datagrams, ACK/NACK)
 
 ## Phase 2 — Login
 
