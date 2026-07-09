@@ -1,0 +1,11 @@
+[package]
+name = "rustmine-game"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+tracing.workspace = true
+thiserror.workspace = true
+rustmine-ecs = { path = "../ecs" }
+rustmine-world = { path = "../world" }

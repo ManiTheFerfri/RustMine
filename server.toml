@@ -1,0 +1,19 @@
+[server]
+name = "RustMine Server"
+motd = "A RustMine Bedrock Server"
+port = 19132
+max_players = 20
+bind_address = "0.0.0.0"
+
+[game]
+view_distance = 10
+gamemode = "survival"
+difficulty = "normal"
+world_name = "world"
+seed = 0
+
+[auth]
+online_mode = false
+
+[logging]
+level = "info"

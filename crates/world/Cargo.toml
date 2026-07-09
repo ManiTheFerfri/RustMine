@@ -1,0 +1,11 @@
+[package]
+name = "rustmine-world"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+tracing.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+rustmine-nbt = { path = "../nbt" }

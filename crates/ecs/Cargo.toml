@@ -1,0 +1,9 @@
+[package]
+name = "rustmine-ecs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+hecs.workspace = true
+tracing.workspace = true
