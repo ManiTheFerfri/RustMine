@@ -19,8 +19,8 @@ pub use connection::{Connection, ConnectionState};
 pub use packet::id;
 pub use packet::{
     decode_ack, decode_datagram, decode_frame, decode_nack, decode_offline, encode_ack,
-    encode_datagram, encode_frame, encode_offline, parse_packet, Ack, Frame, FrameSetEntry,
-    FrameType, Nack, OfflinePacket, RaknetPacket, Reliability, SequenceRange, MAGIC,
+    encode_datagram, encode_frame, encode_offline, parse_packet, split_into_frames, Ack, Frame,
+    FrameSetEntry, FrameType, Nack, OfflinePacket, RaknetPacket, Reliability, SequenceRange, MAGIC,
 };
 pub use server::RaknetServer;
 
@@ -29,3 +29,12 @@ pub const RAKNET_PROTOCOL_VERSION: u8 = 11;
 
 /// Maximum transmission unit (typical for Bedrock).
 pub const MAX_MTU: u16 = 1492;
+
+/// Bedrock protocol version (v1001 / 1.26.30) referenced from RakNet pongs.
+pub(crate) fn protocol_version() -> u32 {
+    1001
+}
+pub(crate) fn game_version() -> &'static str {
+    "1.26.30"
+}
+

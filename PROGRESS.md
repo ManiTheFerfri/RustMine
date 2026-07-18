@@ -12,24 +12,30 @@
 - [x] UDP socket + unconnected ping/pong (server discovery)
 - [x] Connection handshake (open connection request/reply)
 - [x] Reliability layers (unreliable, reliable, reliable-ordered)
-- [ ] Packet splitting/reassembly (MTU) — ponytail: split field parsed but reassembly deferred
-- [x] ACK/NACK handling
+- [x] Packet splitting/reassembly (MTU): encoder splits oversize payloads; receiver reassembles split frames keyed by split_id and expires stale partials
+- [x] ACK/NACK handling with periodic resend of un-ACKed reliable datagrams
 - [x] Connection lifecycle (timeouts, disconnects, ping tracking)
-- [x] 17 round-trip tests (offline packets, frames, datagrams, ACK/NACK)
+- [x] Channel-based hooks (`ServerEvent` / outbound sender) for the game loop to receive batches and queue sends without blocking I/O
+- [x] Round-trip tests for offline packets, frames, datagrams, ACK/NACK, and split-frame reassembly
 
-## Phase 2 — Login
+## Phase 2 — Login (in progress)
 
-- [ ] Login packet handling
-- [ ] Offline-mode auth
-- [ ] Resource pack negotiation (no-packs path)
-- [ ] Client reaches in-world state
+- [x] VarInt/ZigZag helpers (rustmine-nbt)
+- [x] Bedrock 0xfe batch framing (encode/decode, with round-trip tests)
+- [x] Packet ID table for v1001 / 1.26.30
+- [x] Login handshake encoders: NetworkSettings, PlayStatus, ResourcePacksInfo, ResourcePackStack, Disconnect, StartGame (minimal), SetSpawnPosition, SetTime, SetDifficulty, SetPlayerGameType, ChunkRadiusUpdated, BiomeDefinitionList, NetworkChunkPublisherUpdate, empty LevelChunk, PlayerList
+- [x] Session state machine driving the client from RequestNetworkSettings → in-world (offline mode)
+- [x] Server wires RakNet events into Session dispatch and flushes responses through the outbound queue
+- [ ] JWT chain parsing / online-mode auth (gated by `auth.online_mode`)
+- [ ] Full skin payload parsing in PlayerList
+- [ ] Client reaches in-world state verified against a real Bedrock 1.26.30 client (needs manual test)
 
 ## Phase 3 — World Sync
 
 - [ ] Chunk generation (flat + simple noise)
-- [ ] Chunk network encoding
-- [ ] Player spawn
-- [ ] Movement sync
+- [ ] Correct chunk network encoding (subchunks v8, biomes, block palette)
+- [ ] Player spawn position + spawn chunk radius
+- [ ] Movement sync (MovePlayer broadcast)
 
 ## Phase 4 — Interaction
 

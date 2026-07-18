@@ -569,6 +569,50 @@ pub fn encode_datagram(entry: &FrameSetEntry) -> Vec<u8> {
     buf
 }
 
+/// Split a payload into MTU-sized frames. Produces a vec of [`Frame`]s sharing
+/// the same `split_id`, each carrying a chunk of `body`. All returned frames
+/// have `is_split = true` and the appropriate split metadata populated; the
+/// caller is responsible for assigning `reliable_index`/`order_index` and
+/// wrapping them into datagrams.
+pub fn split_into_frames(
+    body: &[u8],
+    mtu: u16,
+    split_id: u16,
+    reliability: Reliability,
+    order_channel: u8,
+) -> Vec<Frame> {
+    // 4 bytes = datagram header (id 1 + seq 3). Estimate a safety budget for
+    // frame header overhead (reliable + ordered + split metadata).
+    let datagram_header = 4;
+    let per_frame_overhead = 1 /* flags */ + 2 /* length bits */
+        + if reliability.is_reliable() { 3 } else { 0 }
+        + if matches!(reliability, Reliability::UnreliableSequenced | Reliability::ReliableSequenced) { 3 } else { 0 }
+        + if matches!(reliability, Reliability::ReliableOrdered | Reliability::ReliableSequenced) { 4 } else { 0 }
+        + 4 + 2 + 4; /* split_count + split_id + split_index */
+    let max_chunk = (mtu as usize)
+        .saturating_sub(datagram_header)
+        .saturating_sub(per_frame_overhead)
+        .max(16);
+
+    let split_count = ((body.len() + max_chunk - 1) / max_chunk).max(1) as u32;
+    let mut frames = Vec::with_capacity(split_count as usize);
+    for (i, chunk) in body.chunks(max_chunk).enumerate() {
+        frames.push(Frame {
+            reliability,
+            is_split: true,
+            reliable_index: None, // caller assigns per-frame
+            sequence_index: None,
+            order_index: None, // caller assigns same order index to all pieces
+            order_channel,
+            split_count: Some(split_count),
+            split_id: Some(split_id),
+            split_index: Some(i as u32),
+            body: chunk.to_vec(),
+        });
+    }
+    frames
+}
+
 // ── ACK / NACK ─────────────────────────────────────────────────────────
 
 pub fn decode_nack(buf: &[u8]) -> Result<Nack, PacketError> {
