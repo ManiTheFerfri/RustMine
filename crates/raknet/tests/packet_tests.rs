@@ -238,3 +238,44 @@ fn reject_bad_magic() {
     buf.extend_from_slice(&0i64.to_be_bytes());
     assert!(decode_offline(&buf).is_err());
 }
+
+// ── split frame header roundtrip ───────────────────────────────────
+
+#[test]
+fn frame_with_split_flag_roundtrips() {
+    let frame = Frame {
+        reliability: Reliability::ReliableOrdered,
+        is_split: true,
+        reliable_index: Some(1),
+        sequence_index: None,
+        order_index: Some(2),
+        order_channel: 0,
+        split_count: Some(4),
+        split_id: Some(99),
+        split_index: Some(3),
+        body: b"chunk3".to_vec(),
+    };
+    let raw = encode_frame(&frame);
+    let decoded = decode_frame(&raw).unwrap().0;
+    assert!(decoded.is_split);
+    assert_eq!(decoded.split_count, Some(4));
+    assert_eq!(decoded.split_id, Some(99));
+    assert_eq!(decoded.split_index, Some(3));
+    assert_eq!(decoded.body, b"chunk3");
+}
+
+#[test]
+fn split_into_frames_produces_multiple_pieces() {
+    let payload: Vec<u8> = (0..4096u32).map(|i| (i & 0xff) as u8).collect();
+    let pieces = split_into_frames(&payload, 576, 12, Reliability::ReliableOrdered, 0);
+    assert!(pieces.len() > 1);
+    let total: usize = pieces.iter().map(|p| p.body.len()).sum();
+    assert_eq!(total, payload.len());
+    assert!(pieces.iter().all(|p| p.is_split && p.split_id == Some(12)));
+    // Indices must be 0..n unique.
+    let mut indices: Vec<u32> = pieces.iter().map(|p| p.split_index.unwrap()).collect();
+    indices.sort();
+    for (i, idx) in indices.iter().enumerate() {
+        assert_eq!(*idx, i as u32);
+    }
+}

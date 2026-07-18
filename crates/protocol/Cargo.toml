@@ -5,7 +5,8 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-tracing.workspace = true
 thiserror.workspace = true
-bytes.workspace = true
 rustmine-nbt = { path = "../nbt" }
+bytes.workspace = true
+
+[dev-dependencies]

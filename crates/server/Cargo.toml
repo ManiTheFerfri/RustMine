@@ -18,3 +18,5 @@ clap.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 rustmine-raknet = { path = "../raknet" }
+rustmine-protocol = { path = "../protocol" }
+rustmine-nbt = { path = "../nbt" }
