@@ -307,8 +307,110 @@ async fn run_server(socket: UdpSocket, cfg: ServerConfig) {
                         should_send_chunks = session_guard.on_packet(raw[0], &raw[1..]);
                     }
                     
-                    // Collect responses
+                    // Collect responses and interactions
+                    let interactions = session_guard.take_interactions();
+                    let entity_id = session_guard.entity_id;
+                    let player_pos = session_guard.position; // capture before drop
                     responses = session_guard.collect_responses();
+                    drop(session_guard); // Explicit drop for clarity
+                    
+                    // Apply interaction events to world and game state
+                    for event in interactions {
+                        match event {
+                            session::BlockInteractionEvent::Break { x, y, z } => {
+                                // Reach validation
+                                if !rustmine_protocol::interaction::within_reach(
+                                    player_pos.x, player_pos.y, player_pos.z,
+                                    x, y, z, 5.0,
+                                ) {
+                                    info!(
+                                        "Block break at ({}, {}, {}) rejected: out of reach (max 5.0)",
+                                        x, y, z
+                                    );
+                                    continue;
+                                }
+                                let block_pos = BlockPos::new(x, y, z);
+                                {
+                                    let mut world = packet_state.world.lock().await;
+                                    let current_block = world.get_block(block_pos);
+                                    if current_block != BlockState::Air {
+                                        let _ = world.set_block(block_pos, BlockState::Air);
+                                        info!("Block broken at ({}, {}, {}): set to air", x, y, z);
+                                        let update_packet = rustmine_protocol::interaction::encode_update_block(
+                                            x, y, z, 0,
+                                        );
+                                        let sessions = packet_state.sessions.read().await;
+                                        for (addr, session) in sessions.iter() {
+                                            let guard = session.read().await;
+                                            if guard.state == session::SessionState::Spawned {
+                                                let _ = send_handle.send((
+                                                    addr.clone(),
+                                                    update_packet.clone(),
+                                                    rustmine_raknet::Reliability::ReliableOrdered,
+                                                    0,
+                                                ));
+                                            }
+                                        }
+                                    } else {
+                                        info!("Block break at ({}, {}, {}): already air", x, y, z);
+                                    }
+                                }
+                                {
+                                    let mut game = packet_state.game.lock().await;
+                                    game.tick(Some(GameEvent::BlockBreak(
+                                        entity_id,
+                                        (x, y, z),
+                                    )));
+                                }
+                            }
+                            session::BlockInteractionEvent::Place { x, y, z, runtime_id } => {
+                                if !rustmine_protocol::interaction::within_reach(
+                                    player_pos.x, player_pos.y, player_pos.z,
+                                    x, y, z, 5.0,
+                                ) {
+                                    info!(
+                                        "Block place at ({}, {}, {}) rejected: out of reach (max 5.0)",
+                                        x, y, z
+                                    );
+                                    continue;
+                                }
+                                let block_pos = BlockPos::new(x, y, z);
+                                if let Some(rid) = runtime_id {
+                                    info!("Block place at ({}, {}, {}): runtime_id {}", x, y, z, rid);
+                                    {
+                                        let mut world = packet_state.world.lock().await;
+                                        let state = rustmine_world::BlockState::from_runtime_id(rid);
+                                        let _ = world.set_block(block_pos, state);
+                                    }
+                                    let update_packet = rustmine_protocol::interaction::encode_update_block(
+                                        x, y, z, rid,
+                                    );
+                                    let sessions = packet_state.sessions.read().await;
+                                    for (addr, session) in sessions.iter() {
+                                        let guard = session.read().await;
+                                        if guard.state == session::SessionState::Spawned {
+                                            let _ = send_handle.send((
+                                                addr.clone(),
+                                                update_packet.clone(),
+                                                rustmine_raknet::Reliability::ReliableOrdered,
+                                                0,
+                                            ));
+                                        }
+                                    }
+                                    {
+                                        let mut game = packet_state.game.lock().await;
+                                        game.tick(Some(GameEvent::BlockPlace(
+                                            entity_id,
+                                            (x, y, z),
+                                            rid,
+                                        )));
+                                    }
+                                } else {
+                                    info!("Block place at ({}, {}, {}): no runtime ID provided", x, y, z);
+                                }
+                            }
+                        }
+                    }
                 } else {
                     continue;
                 }
