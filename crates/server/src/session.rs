@@ -12,7 +12,7 @@ use tracing::{debug, info, trace};
 
 use rustmine_protocol::id;
 use rustmine_protocol::login;
-use rustmine_protocol::{write_packet, SUPPORTED_PROTOCOL_VERSION, decode_batch};
+use rustmine_protocol::{write_packet, SUPPORTED_PROTOCOL_VERSION, decode_batch, interaction};
 use rustmine_nbt::write_var_i32;
 
 /// Player position and rotation
@@ -63,6 +63,13 @@ pub struct Outbound {
     pub order_channel: u8,
 }
 
+/// Interaction events captured from BREAK_BLOCK / PLACE_BLOCK packets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BlockInteractionEvent {
+    Break { x: i32, y: i32, z: i32 },
+    Place { x: i32, y: i32, z: i32, runtime_id: Option<u32> },
+}
+
 /// Tracks a single connected player.
 pub struct Session {
     pub username: String,
@@ -71,6 +78,8 @@ pub struct Session {
     pub state: SessionState,
     pub view_distance: u32,
     pub position: Position,
+    /// Pending interaction events parsed from the latest packet burst.
+    pub pending_interactions: Vec<BlockInteractionEvent>,
     /// Outbound queue; the network task drains this and sends over RakNet.
     pub tx: mpsc::UnboundedSender<Outbound>,
     pub rx: mpsc::UnboundedReceiver<Outbound>,
@@ -86,6 +95,7 @@ impl Session {
             state: SessionState::WaitSettings,
             view_distance: 4,
             position: Position::default(),
+            pending_interactions: Vec::new(),
             tx,
             rx,
         }
@@ -107,6 +117,11 @@ impl Session {
         for p in packets {
             self.send_packet(p);
         }
+    }
+
+    /// Collect all pending interaction events and clear them.
+    pub fn take_interactions(&mut self) -> Vec<BlockInteractionEvent> {
+        std::mem::take(&mut self.pending_interactions)
     }
 
     /// Collect all pending responses from the channel
@@ -265,13 +280,47 @@ impl Session {
                 false
             }
             id::BREAK_BLOCK => {
-                // Break block
-                trace!("break block");
+                if let Some(info) = interaction::parse_break_block(body) {
+                    info!(
+                        user = self.username.as_str(),
+                        x = info.x,
+                        y = info.y,
+                        z = info.z,
+                        "Block break interaction"
+                    );
+                    self.pending_interactions.push(
+                        BlockInteractionEvent::Break {
+                            x: info.x,
+                            y: info.y,
+                            z: info.z,
+                        },
+                    );
+                } else {
+                    trace!("Failed to parse BREAK_BLOCK payload");
+                }
                 false
             }
             id::PLACE_BLOCK => {
-                // Place block
-                trace!("place block");
+                if let Some(info) = interaction::parse_place_block(body) {
+                    info!(
+                        user = self.username.as_str(),
+                        x = info.x,
+                        y = info.y,
+                        z = info.z,
+                        runtime_id = ?info.runtime_id,
+                        "Block place interaction"
+                    );
+                    self.pending_interactions.push(
+                        BlockInteractionEvent::Place {
+                            x: info.x,
+                            y: info.y,
+                            z: info.z,
+                            runtime_id: info.runtime_id,
+                        },
+                    );
+                } else {
+                    trace!("Failed to parse PLACE_BLOCK payload");
+                }
                 false
             }
             id::RESPAWN => {

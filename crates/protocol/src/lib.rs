@@ -14,6 +14,7 @@ pub mod chunk;
 pub mod codec;
 pub mod decode;
 pub mod id;
+pub mod interaction;
 pub mod login;
 
 pub use batch::{decode_batch, encode_batch, COMPRESSION_THRESHOLD};
