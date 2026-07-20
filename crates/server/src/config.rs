@@ -61,6 +61,9 @@ pub struct GameSection {
     /// World seed for terrain generation.
     #[serde(default)]
     pub seed: u64,
+    /// Generate a flat world instead of terrain.
+    #[serde(default)]
+    pub flat_world: bool,
 }
 
 /// Authentication settings.
@@ -149,6 +152,7 @@ impl Default for ServerConfig {
                 difficulty: default_difficulty(),
                 world_name: default_world_name(),
                 seed: 0,
+                flat_world: false,
             },
             auth: AuthSection {
                 online_mode: default_online_mode(),

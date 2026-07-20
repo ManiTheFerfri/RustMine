@@ -10,7 +10,9 @@
 #![allow(dead_code)]
 
 pub mod batch;
+pub mod chunk;
 pub mod codec;
+pub mod decode;
 pub mod id;
 pub mod login;
 

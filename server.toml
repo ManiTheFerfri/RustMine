@@ -11,6 +11,7 @@ gamemode = "survival"
 difficulty = "normal"
 world_name = "world"
 seed = 0
+flat_world = true
 
 [auth]
 online_mode = false

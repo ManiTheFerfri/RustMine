@@ -15,7 +15,7 @@ pub const SET_TIME: u8 = 0x0a;
 pub const START_GAME: u8 = 0x0b;
 pub const ADD_PLAYER: u8 = 0x0d;
 pub const MOVE_PLAYER: u8 = 0x13;
-pub const UPDATE_BLOCKS: u8 = 0x15; // placeholder
+pub const UPDATE_BLOCKS: u8 = 0x15;
 pub const SET_SPAWN_POSITION: u8 = 0x2b;
 pub const RESPAWN_POSITION: u8 = 0x2d;
 pub const CONTAINER_OPEN: u8 = 0x2e;
@@ -30,3 +30,20 @@ pub const BIOME_DEFINITION_LIST: u8 = 0x7a;
 pub const NETWORK_SETTINGS: u8 = 0x8f;
 pub const REQUEST_NETWORK_SETTINGS: u8 = 0xc1;
 pub const PACKET_VIOLATION_WARNING: u8 = 0x9c;
+
+// Additional client-bound packets for gameplay
+pub const INTERACT: u8 = 0x10;
+pub const USE_ITEM: u8 = 0x11;
+pub const PLAYER_INPUT: u8 = 0x12;
+pub const BREAK_BLOCK: u8 = 0x14;
+pub const PLACE_BLOCK: u8 = 0x16;
+pub const RESPAWN: u8 = 0x30;
+pub const CHAT_MESSAGE: u8 = 0x31;
+pub const COMMAND_REQUEST: u8 = 0x4e;
+pub const SET_LOCAL_PLAYER_AS_INITIALIZED: u8 = 0x5d;
+
+// Inventory packets
+pub const INVENTORY_TRANSACTION: u8 = 0x17;
+pub const INVENTORY_SLOT: u8 = 0x19;
+pub const INVENTERY_CONTENT: u8 = 0x1a;
+pub const CONTAINER_SET_DATA: u8 = 0x22;

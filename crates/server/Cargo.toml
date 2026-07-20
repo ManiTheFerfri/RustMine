@@ -20,3 +20,6 @@ thiserror.workspace = true
 rustmine-raknet = { path = "../raknet" }
 rustmine-protocol = { path = "../protocol" }
 rustmine-nbt = { path = "../nbt" }
+rustmine-world = { path = "../world" }
+rustmine-game = { path = "../game" }
+rustmine-commands = { path = "../commands" }
